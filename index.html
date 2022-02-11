@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+    <title>Editor.js Tutorial </title>
+</head>
+
+<body style="height: 100vh; margin: 0; padding: 0;">
+    <div style="width: 90vw; margin: auto; height: inherit;">
+        <div id='editorjs' style="border: 1px solid; height: 90%;"></div>
+
+        <button id="saveButton">Save post</button>
+        <pre id="output"></pre>
+    </div>
+
+
+</body>
+
+<script>
+    // class SimpleImage {
+    //     static get toolbox() {
+    //         return {
+    //             title: 'Image',
+    //             icon: '<svg width="17" height="15" viewBox="0 0 336 276" xmlns="http://www.w3.org/2000/svg"><path d="M291 150V79c0-19-15-34-34-34H79c-19 0-34 15-34 34v42l67-44 81 72 56-29 42 30zm0 52l-43-30-56 30-81-67-66 39v23c0 19 15 34 34 34h178c17 0 31-13 34-29zM79 0h178c44 0 79 35 79 79v118c0 44-35 79-79 79H79c-44 0-79-35-79-79V79C0 35 35 0 79 0z"/></svg>'
+    //         };
+    //     }
+
+    //     render() {
+    //         const myInput = document.createElement('input');
+    //         myInput.type = "file"
+    //         return myInput
+    //     }
+
+    //     save(blockContent) {
+    //         return {
+    //             url: blockContent.value
+    //         }
+    //     }
+    // }
+
+    // 
+
+    class SimpleVideo {
+        static get toolbox() {
+            return {
+                title: 'Video',
+                icon: '<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>'
+            };
+        }
+        constructor({ data }) {
+            this.data = data;
+            this.wrapper = undefined;
+        }
+
+        render() {
+            this.wrapper = document.createElement('div');
+            const input = document.createElement('input');
+
+            if (this.data && this.data.url) {
+                this._createImage(this.data.url, this.data.caption);
+                return this.wrapper;
+            }
+
+            this.wrapper.classList.add('simple-image');
+
+            input.placeholder = 'Paste an image URL...';
+            input.type = "file";
+            input.accept = 'video/*'
+            input.value = this.data && this.data.url ? this.data.url : '';
+
+            input.addEventListener('change', this._createImage.bind(this), false)
+
+            this.wrapper.appendChild(input);
+
+            console.log(this.data.url);
+
+            return this.wrapper;
+        }
+
+
+        _createImage(e, captionText = "") {
+            const [file] = e.target.files
+            const video = document.createElement('video');
+            const source = document.createElement('source');
+            const caption = document.createElement('input');
+
+            if (file) {
+                source.src = URL.createObjectURL(file)
+            }
+
+            caption.placeholder = "Caption..."
+            caption.value = captionText;
+
+            video.autoplay = true
+            video.loop = true
+            video.muted = true
+            video.controls = true
+
+            video.appendChild(source)
+            this.wrapper.innerHTML = '';
+            this.wrapper.appendChild(video);
+            this.wrapper.appendChild(caption);
+        }
+
+
+        save(blockContent) {
+            const source = blockContent.querySelector('source');
+            const caption = blockContent.querySelector('input');
+
+            return {
+                url: source.src,
+                caption: caption.value
+            }
+        }
+
+        validate(savedData) {
+            if (!savedData.url.trim()) {
+                return false;
+            }
+            return true;
+        }
+
+    }
+
+    // 
+
+    const editor = new EditorJS({
+        holder: 'editorjs',
+        autofocus: true,
+        placeholder: "Let's write an awesome story!",
+        tools: {
+            image: SimpleVideo
+        }
+    });
+
+    const saveButton = document.getElementById('saveButton');
+    const output = document.getElementById('output');
+
+    saveButton.addEventListener('click', () => {
+        editor.save().then(savedData => {
+            output.innerHTML = JSON.stringify(savedData, null, 4)
+        })
+    })
+
+</script>
+
+</html>
